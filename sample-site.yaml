@@ -1,4 +1,4 @@
-site:
+asite:
   title: Example Corp
   description: Graybox prototype of the proposed IA.
 
@@ -33,8 +33,8 @@ mainNav:
 pages:
   home:
     title: Home
-    description: Landing that quickly explains value props and orients visitors to key paths.
     notes:
+      overview: Landing that quickly explains value props and orients visitors to key paths.
       goals:
         - Orient new visitors quickly
         - Drive to Services or Contact
@@ -137,5 +137,6 @@ footer:
       href: https://example.com/privacy
     - label: Contact
       pageId: contact
+
 
 

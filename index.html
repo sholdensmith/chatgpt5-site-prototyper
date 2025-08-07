@@ -52,10 +52,7 @@
           <h2 id="loaderTitle">Load Information Architecture</h2>
         </header>
         <div class="loader-body">
-          <div class="tabs">
-            <button type="button" class="tab active" data-tab="upload">Upload file</button>
-            <button type="button" class="tab" data-tab="paste">Paste text</button>
-          </div>
+          <div class="tabs" hidden></div>
 
           <section class="tab-panel active" data-tab-panel="upload">
             <div class="file-drop" id="fileDrop">
@@ -64,7 +61,7 @@
             </div>
           </section>
 
-          <section class="tab-panel" data-tab-panel="paste">
+          <section class="tab-panel" data-tab-panel="paste" hidden>
             <label for="pasteInput" class="sr-only">Paste IA text</label>
             <textarea id="pasteInput" placeholder="Paste YAML or structured Markdown here"></textarea>
           </section>
@@ -79,6 +76,8 @@
         </footer>
       </form>
     </dialog>
+
+    
 
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <script src="./app.js"></script>

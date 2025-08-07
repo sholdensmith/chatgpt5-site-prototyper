@@ -161,6 +161,8 @@ footer:
     loadSampleBtn: document.getElementById('loadSampleBtn'),
   };
 
+  // (Journeys removed)
+
   // Router: use hash navigation for simplicity
   window.addEventListener('hashchange', () => {
     const pageId = location.hash.replace(/^#\/?/, '') || null;
@@ -193,17 +195,11 @@ footer:
   }
 
   function bindLoaderTabs() {
-    const tabs = Array.from(els.loaderDialog.querySelectorAll('.tab'));
-    const panels = Array.from(els.loaderDialog.querySelectorAll('.tab-panel'));
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        panels.forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        const panel = els.loaderDialog.querySelector(`.tab-panel[data-tab-panel="${tab.dataset.tab}"]`);
-        if (panel) panel.classList.add('active');
-      });
-    });
+    // With no visible tabs, ensure upload panel remains active by default
+    const uploadPanel = els.loaderDialog.querySelector('.tab-panel[data-tab-panel="upload"]');
+    const pastePanel = els.loaderDialog.querySelector('.tab-panel[data-tab-panel="paste"]');
+    if (uploadPanel) uploadPanel.classList.add('active');
+    if (pastePanel) pastePanel.classList.remove('active');
   }
 
   function readFileAsText(file) {
@@ -347,6 +343,7 @@ footer:
     if (Array.isArray(raw.mainNav)) ia.mainNav = raw.mainNav;
     if (raw.pages && typeof raw.pages === 'object') ia.pages = raw.pages;
     if (raw.footer && typeof raw.footer === 'object') ia.footer = { links: raw.footer.links || [] };
+    // journeys removed
 
     // Ensure nav items have pageId or href; derive pageId from label if missing and page exists
     for (const item of ia.mainNav) {
@@ -419,13 +416,17 @@ footer:
     if (Array.isArray(rawNotes)) return { ...empty, goals: rawNotes.map(String) };
     if (typeof rawNotes === 'object') {
       const mapToArray = (v) => v == null ? [] : Array.isArray(v) ? v.map(String) : [String(v)];
+      const toStringValue = (v) => v == null ? undefined : Array.isArray(v) ? v.map(String).join(' ') : String(v);
       const out = {
         goals: mapToArray(rawNotes.goals ?? rawNotes.goal),
         audience: mapToArray(rawNotes.audience ?? rawNotes.users ?? rawNotes.personas),
         successCriteria: mapToArray(rawNotes.successCriteria ?? rawNotes.success ?? rawNotes.kpis),
       };
+      // Preserve overview as a top-level string if present
+      const overview = toStringValue(rawNotes.overview);
+      if (overview && overview.trim().length) out.overview = overview.trim();
       // Capture any other keys as additional labeled lists
-      const reserved = new Set(['goals','goal','audience','users','personas','successCriteria','success','kpis']);
+      const reserved = new Set(['goals','goal','audience','users','personas','successCriteria','success','kpis','overview']);
       const other = {};
       for (const [k, v] of Object.entries(rawNotes)) {
         if (reserved.has(k)) continue;
@@ -450,10 +451,12 @@ footer:
     renderUtilityNav(ia.utilityNav);
     renderMainNav(ia.mainNav);
     renderFooter(ia.footer);
+    // journeys removed
     // initial route
     const initial = location.hash.replace(/^#\/?/, '') || findFirstNavigable(ia);
     navigateToPage(initial);
   }
+
 
   function findFirstNavigable(ia) {
     for (const item of ia.mainNav) {
@@ -705,22 +708,11 @@ footer:
       const details = document.createElement('details');
       details.className = 'notes-panel';
       const summary = document.createElement('summary');
-      let summaryText = 'Notes';
-      if (page.notes.overview) {
-        const ov = String(page.notes.overview).trim();
-        if (ov) summaryText = `Notes — ${truncate(ov, 100)}`;
-      }
-      summary.textContent = summaryText;
+      summary.textContent = 'Notes';
       details.appendChild(summary);
 
       const notesBody = document.createElement('div');
       notesBody.className = 'notes-body';
-
-      if (page.notes.overview) {
-        const p = document.createElement('p');
-        p.textContent = String(page.notes.overview);
-        notesBody.appendChild(p);
-      }
 
       const addList = (title, items) => {
         if (!Array.isArray(items) || !items.length) return;
@@ -736,6 +728,17 @@ footer:
         notesBody.appendChild(ul);
       };
 
+      // Overview first
+      if (page.notes.overview) {
+        const h = document.createElement('h4');
+        h.textContent = 'Overview';
+        const p = document.createElement('p');
+        p.textContent = String(page.notes.overview);
+        notesBody.appendChild(h);
+        notesBody.appendChild(p);
+      }
+
+      // Then the standard lists
       addList('Goals', page.notes.goals);
       addList('Audience', page.notes.audience);
       addList('Success criteria', page.notes.successCriteria);
@@ -912,7 +915,26 @@ footer:
     el.addEventListener('drop', async e => {
       const file = e.dataTransfer?.files?.[0];
       if (!file) return;
-      els.fileInput.files = e.dataTransfer.files;
+      els.loaderError.textContent = '';
+      try {
+        const text = await readFileAsText(file);
+        loadIAFromText(text);
+      } catch (err) {
+        showLoaderError(err);
+      }
+    });
+
+    // Load immediately when a file is chosen via the file picker
+    els.fileInput.addEventListener('change', async () => {
+      const file = els.fileInput.files?.[0];
+      if (!file) return;
+      els.loaderError.textContent = '';
+      try {
+        const text = await readFileAsText(file);
+        loadIAFromText(text);
+      } catch (err) {
+        showLoaderError(err);
+      }
     });
   }
 
@@ -926,15 +948,14 @@ footer:
 
   function loadSample() {
     const url = `./sample-site.yaml?cb=${Date.now()}`;
-    fetch(url, { cache: 'no-store' }).then(r => r.text()).then(t => {
-      els.pasteInput.value = t;
-      const pasteTab = els.loaderDialog.querySelector('.tab[data-tab="paste"]');
-      pasteTab?.click();
-    }).catch(() => {
-      els.pasteInput.value = EMBEDDED_SAMPLE_YAML;
-      const pasteTab = els.loaderDialog.querySelector('.tab[data-tab="paste"]');
-      pasteTab?.click();
-    });
+    fetch(url, { cache: 'no-store' })
+      .then(r => r.text())
+      .then(text => {
+        loadIAFromText(text);
+      })
+      .catch(() => {
+        loadIAFromText(EMBEDDED_SAMPLE_YAML);
+      });
   }
 
   // Wire up UI

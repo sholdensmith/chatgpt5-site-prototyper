@@ -103,6 +103,7 @@ body {
 .floating-sitemap-btn {
   position: fixed; right: 16px; bottom: 72px; z-index: 20; padding: 10px 12px; border-radius: 50%; width: 44px; height: 44px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 6px 18px rgba(0,0,0,.08); cursor: pointer;
 }
+/* (Journeys removed) */
 
 .loader-dialog { max-width: min(900px, 92vw); width: 100%; border: none; padding: 0; border-radius: 12px; }
 .loader-surface { display: grid; grid-template-rows: auto 1fr auto; max-height: 80vh; }
