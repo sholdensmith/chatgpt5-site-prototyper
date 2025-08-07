@@ -38,6 +38,12 @@ pages:
   about:
     title: About
     description: Optional page goal or description
+    notes:
+      goals:
+        - Explain who we are and why we exist
+      audience: Prospects and partners
+      successCriteria:
+        - Clicks to Leadership
     sections:
       - heading: Hero
         description: Optional

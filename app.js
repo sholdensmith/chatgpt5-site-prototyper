@@ -362,6 +362,8 @@ footer:
       if (!page.title) page.title = pid.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       // Normalize page-level CTAs to array
       if (page.ctas !== undefined) page.ctas = normalizeCTAs(page.ctas);
+      // Normalize notes
+      if (page.notes !== undefined) page.notes = normalizeNotes(page.notes);
       // Normalize section CTAs to array
       if (Array.isArray(page.sections)) {
         page.sections = page.sections.map(section => {
@@ -401,6 +403,32 @@ footer:
         return null;
       })
       .filter(Boolean);
+  }
+
+  function normalizeNotes(rawNotes) {
+    const empty = { goals: [], audience: [], successCriteria: [] };
+    if (rawNotes == null) return empty;
+    // If string, treat as a single general goal
+    if (typeof rawNotes === 'string') return { ...empty, goals: [rawNotes] };
+    if (Array.isArray(rawNotes)) return { ...empty, goals: rawNotes.map(String) };
+    if (typeof rawNotes === 'object') {
+      const mapToArray = (v) => v == null ? [] : Array.isArray(v) ? v.map(String) : [String(v)];
+      const out = {
+        goals: mapToArray(rawNotes.goals ?? rawNotes.goal),
+        audience: mapToArray(rawNotes.audience ?? rawNotes.users ?? rawNotes.personas),
+        successCriteria: mapToArray(rawNotes.successCriteria ?? rawNotes.success ?? rawNotes.kpis),
+      };
+      // Capture any other keys as additional labeled lists
+      const reserved = new Set(['goals','goal','audience','users','personas','successCriteria','success','kpis']);
+      const other = {};
+      for (const [k, v] of Object.entries(rawNotes)) {
+        if (reserved.has(k)) continue;
+        other[k] = mapToArray(v);
+      }
+      if (Object.keys(other).length) out.other = other;
+      return out;
+    }
+    return empty;
   }
 
   function renderIA(ia) {
@@ -647,6 +675,49 @@ footer:
       container.appendChild(list);
     }
 
+    // Notes panel (collapsible)
+    if (page.notes && (
+      (Array.isArray(page.notes.goals) && page.notes.goals.length) ||
+      (Array.isArray(page.notes.audience) && page.notes.audience.length) ||
+      (Array.isArray(page.notes.successCriteria) && page.notes.successCriteria.length) ||
+      (page.notes.other && Object.keys(page.notes.other).length)
+    )) {
+      const details = document.createElement('details');
+      details.className = 'notes-panel';
+      const summary = document.createElement('summary');
+      summary.textContent = 'Notes';
+      details.appendChild(summary);
+
+      const notesBody = document.createElement('div');
+      notesBody.className = 'notes-body';
+
+      const addList = (title, items) => {
+        if (!Array.isArray(items) || !items.length) return;
+        const h = document.createElement('h4');
+        h.textContent = title;
+        const ul = document.createElement('ul');
+        for (const it of items) {
+          const li = document.createElement('li');
+          li.textContent = it;
+          ul.appendChild(li);
+        }
+        notesBody.appendChild(h);
+        notesBody.appendChild(ul);
+      };
+
+      addList('Goals', page.notes.goals);
+      addList('Audience', page.notes.audience);
+      addList('Success criteria', page.notes.successCriteria);
+      if (page.notes.other) {
+        for (const [label, items] of Object.entries(page.notes.other)) {
+          addList(capitalize(label), items);
+        }
+      }
+
+      details.appendChild(notesBody);
+      container.appendChild(details);
+    }
+
     els.pageOutlet.appendChild(container);
     setHash(pageId);
   }
@@ -763,6 +834,10 @@ footer:
       .replaceAll("'", '&#39;');
   }
 
+  function capitalize(str) {
+    return String(str).charAt(0).toUpperCase() + String(str).slice(1);
+  }
+
   function handleConfirmLoad() {
     const activeTab = els.loaderDialog.querySelector('.tab.active')?.dataset.tab;
     els.loaderError.textContent = '';
@@ -813,7 +888,8 @@ footer:
   }
 
   function loadSample() {
-    fetch('./sample-site.yaml').then(r => r.text()).then(t => {
+    const url = `./sample-site.yaml?cb=${Date.now()}`;
+    fetch(url, { cache: 'no-store' }).then(r => r.text()).then(t => {
       els.pasteInput.value = t;
       const pasteTab = els.loaderDialog.querySelector('.tab[data-tab="paste"]');
       pasteTab?.click();
@@ -839,7 +915,8 @@ footer:
     // If there is an IA provided via URL param ?sample=1, auto-load it
     const url = new URL(location.href);
     if (url.searchParams.get('sample')) {
-      fetch('./sample-site.yaml').then(r => r.text()).then(loadIAFromText).catch(() => {
+      const smUrl = `./sample-site.yaml?cb=${Date.now()}`;
+      fetch(smUrl, { cache: 'no-store' }).then(r => r.text()).then(loadIAFromText).catch(() => {
         loadIAFromText(EMBEDDED_SAMPLE_YAML);
       });
     }

@@ -34,6 +34,14 @@ pages:
   home:
     title: Home
     description: Landing that quickly explains value props and orients visitors to key paths.
+    notes:
+      goals:
+        - Orient new visitors quickly
+        - Drive to Services or Contact
+      audience: New visitors evaluating fit
+      successCriteria:
+        - CTR to Services > 20%
+        - Lead submissions per week > 5
     sections:
       - heading: Hero
         description: High-level positioning
@@ -77,6 +85,14 @@ pages:
   services:
     title: Services
     description: Catalog of offerings with links to detail pages.
+    notes:
+      goals: Help visitors self-identify a fit and click into the right detail page
+      audience:
+        - Decision makers
+        - Practitioners vetting approach
+      successCriteria:
+        - Click-through into detail pages
+        - Contact requests from service pages
     sections:
       - heading: Consulting
         description: Strategy, research, and roadmapping.
