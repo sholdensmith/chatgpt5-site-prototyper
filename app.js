@@ -362,7 +362,13 @@ footer:
       if (!page.title) page.title = pid.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       // Normalize page-level CTAs to array
       if (page.ctas !== undefined) page.ctas = normalizeCTAs(page.ctas);
-      // Normalize notes
+      // Move description into notes.overview, then normalize notes
+      if (page.description) {
+        const existingNotes = page.notes ?? {};
+        // If notes is a string/array/object, merge description as 'overview'
+        page.notes = mergeDescriptionIntoNotes(existingNotes, page.description);
+        delete page.description;
+      }
       if (page.notes !== undefined) page.notes = normalizeNotes(page.notes);
       // Normalize section CTAs to array
       if (Array.isArray(page.sections)) {
@@ -429,6 +435,14 @@ footer:
       return out;
     }
     return empty;
+  }
+
+  function mergeDescriptionIntoNotes(rawNotes, descriptionText) {
+    if (rawNotes == null) return { overview: String(descriptionText) };
+    if (typeof rawNotes === 'string') return { overview: String(descriptionText), goals: [rawNotes] };
+    if (Array.isArray(rawNotes)) return { overview: String(descriptionText), goals: rawNotes };
+    if (typeof rawNotes === 'object') return { ...rawNotes, overview: rawNotes.overview ?? String(descriptionText) };
+    return { overview: String(descriptionText) };
   }
 
   function renderIA(ia) {
@@ -625,7 +639,12 @@ footer:
 
     container.appendChild(h1);
     container.appendChild(meta);
-    container.appendChild(p);
+    // Former description now lives under notes.overview; still render if present in legacy files
+    if (page.description) {
+      const legacy = document.createElement('p');
+      legacy.textContent = page.description;
+      container.appendChild(legacy);
+    }
 
     if (Array.isArray(page.sections) && page.sections.length) {
       for (const section of page.sections) {
@@ -680,16 +699,28 @@ footer:
       (Array.isArray(page.notes.goals) && page.notes.goals.length) ||
       (Array.isArray(page.notes.audience) && page.notes.audience.length) ||
       (Array.isArray(page.notes.successCriteria) && page.notes.successCriteria.length) ||
-      (page.notes.other && Object.keys(page.notes.other).length)
+      (page.notes.other && Object.keys(page.notes.other).length) ||
+      (page.notes.overview && String(page.notes.overview).trim().length)
     )) {
       const details = document.createElement('details');
       details.className = 'notes-panel';
       const summary = document.createElement('summary');
-      summary.textContent = 'Notes';
+      let summaryText = 'Notes';
+      if (page.notes.overview) {
+        const ov = String(page.notes.overview).trim();
+        if (ov) summaryText = `Notes — ${truncate(ov, 100)}`;
+      }
+      summary.textContent = summaryText;
       details.appendChild(summary);
 
       const notesBody = document.createElement('div');
       notesBody.className = 'notes-body';
+
+      if (page.notes.overview) {
+        const p = document.createElement('p');
+        p.textContent = String(page.notes.overview);
+        notesBody.appendChild(p);
+      }
 
       const addList = (title, items) => {
         if (!Array.isArray(items) || !items.length) return;
@@ -836,6 +867,12 @@ footer:
 
   function capitalize(str) {
     return String(str).charAt(0).toUpperCase() + String(str).slice(1);
+  }
+
+  function truncate(str, maxLen) {
+    const s = String(str);
+    if (s.length <= maxLen) return s;
+    return s.slice(0, Math.max(0, maxLen - 1)).trimEnd() + '…';
   }
 
   function handleConfirmLoad() {

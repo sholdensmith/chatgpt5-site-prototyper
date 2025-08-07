@@ -58,7 +58,8 @@ pages:
 
   about:
     title: About
-    description: Who we are and why we exist.
+    notes:
+      overview: Who we are and why we exist.
     sections:
       - heading: Mission
         description: Brief statement of purpose.
@@ -70,7 +71,8 @@ pages:
 
   leadership:
     title: Leadership
-    description: Bios of executive team and practice leads.
+    notes:
+      overview: Bios of executive team and practice leads.
     sections:
       - heading: Executives
       - heading: Practice Leads
@@ -80,7 +82,8 @@ pages:
 
   history:
     title: History
-    description: Milestones that establish credibility and trajectory.
+    notes:
+      overview: Milestones that establish credibility and trajectory.
 
   services:
     title: Services
@@ -107,19 +110,23 @@ pages:
 
   consulting:
     title: Consulting
-    description: Strategy-first engagements that de-risk investment.
+    notes:
+      overview: Strategy-first engagements that de-risk investment.
 
   implementation:
     title: Implementation
-    description: Delivery-focused engagements with measurable outcomes.
+    notes:
+      overview: Delivery-focused engagements with measurable outcomes.
 
   insights:
     title: Insights
-    description: Blog/articles, case studies, and resources.
+    notes:
+      overview: Blog/articles, case studies, and resources.
 
   contact:
     title: Contact
-    description: Lead capture and alternate contact methods.
+    notes:
+      overview: Lead capture and alternate contact methods.
     sections:
       - heading: Form
       - heading: Locations
