@@ -1,0 +1,112 @@
+site:
+  title: Example Corp
+  description: Graybox prototype of the proposed IA.
+
+utilityNav:
+  - label: Contact
+    pageId: contact
+  - label: Careers
+    href: https://example.com/careers
+
+mainNav:
+  - label: Home
+    pageId: home
+  - label: About
+    pageId: about
+    children:
+      - label: Leadership
+        pageId: leadership
+      - label: History
+        pageId: history
+  - label: Services
+    pageId: services
+    children:
+      - label: Consulting
+        pageId: consulting
+      - label: Implementation
+        pageId: implementation
+  - label: Insights
+    pageId: insights
+  - label: Contact
+    pageId: contact
+
+pages:
+  home:
+    title: Home
+    description: Landing that quickly explains value props and orients visitors to key paths.
+    sections:
+      - heading: Hero
+        description: High-level positioning, top CTA to Contact and to Services.
+      - heading: Proof Points
+        description: Logos, stats, testimonial snippets.
+    ctas:
+      - label: Explore Services
+        pageId: services
+      - label: Get in touch
+        pageId: contact
+
+  about:
+    title: About
+    description: Who we are and why we exist.
+    sections:
+      - heading: Mission
+        description: Brief statement of purpose.
+      - heading: Team Overview
+        description: Link off to Leadership.
+    ctas:
+      - label: Meet leadership
+        pageId: leadership
+
+  leadership:
+    title: Leadership
+    description: Bios of executive team and practice leads.
+    sections:
+      - heading: Executives
+      - heading: Practice Leads
+    ctas:
+      - label: Our history
+        pageId: history
+
+  history:
+    title: History
+    description: Milestones that establish credibility and trajectory.
+
+  services:
+    title: Services
+    description: Catalog of offerings with links to detail pages.
+    sections:
+      - heading: Consulting
+        description: Strategy, research, and roadmapping.
+      - heading: Implementation
+        description: Design systems, builds, integrations.
+    ctas:
+      - label: Talk to sales
+        pageId: contact
+
+  consulting:
+    title: Consulting
+    description: Strategy-first engagements that de-risk investment.
+
+  implementation:
+    title: Implementation
+    description: Delivery-focused engagements with measurable outcomes.
+
+  insights:
+    title: Insights
+    description: Blog/articles, case studies, and resources.
+
+  contact:
+    title: Contact
+    description: Lead capture and alternate contact methods.
+    sections:
+      - heading: Form
+      - heading: Locations
+
+footer:
+  links:
+    - label: Privacy
+      href: https://example.com/privacy
+    - label: Contact
+      pageId: contact
+
+

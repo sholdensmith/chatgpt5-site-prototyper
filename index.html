@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Site Prototyper</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#app">Skip to content</a>
+
+    <header class="app-header" role="banner">
+      <div class="top-utility">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">▦</span>
+          <span class="brand-name">Site Prototyper</span>
+        </div>
+        <nav class="utility-nav" aria-label="Utility navigation">
+          <ul id="utilityNav"></ul>
+        </nav>
+      </div>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <button id="mobileNavToggle" class="mobile-nav-toggle" aria-expanded="false" aria-controls="mainNavList">Menu</button>
+        <ul id="mainNavList" class="nav-list"></ul>
+      </nav>
+    </header>
+
+    <main id="app" class="app-main" role="main" tabindex="-1">
+      <div id="pageOutlet" class="page-outlet">
+        <section class="welcome">
+          <h1>Welcome</h1>
+          <p>Load an information architecture file to generate a graybox prototype. Use YAML for the most robust experience.</p>
+          <div class="welcome-actions">
+            <button id="openLoader" class="btn primary">Load IA</button>
+            <a class="btn" href="./sample-site.yaml" download>Download sample YAML</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="app-footer" role="contentinfo">
+      <div id="footerContent" class="footer-content"></div>
+    </footer>
+
+    <button id="floatingLoadBtn" class="floating-load-btn" title="Load IA" aria-haspopup="dialog">IA</button>
+
+    <dialog id="loaderDialog" class="loader-dialog" aria-labelledby="loaderTitle">
+      <form method="dialog" class="loader-surface">
+        <header class="loader-header">
+          <h2 id="loaderTitle">Load Information Architecture</h2>
+        </header>
+        <div class="loader-body">
+          <div class="tabs">
+            <button type="button" class="tab active" data-tab="upload">Upload file</button>
+            <button type="button" class="tab" data-tab="paste">Paste text</button>
+          </div>
+
+          <section class="tab-panel active" data-tab-panel="upload">
+            <div class="file-drop" id="fileDrop">
+              <input id="fileInput" type="file" accept=".yaml,.yml,.txt,.md,.markdown,.json" />
+              <p>Drag & drop your YAML/Markdown/TXT file here, or click to choose.</p>
+            </div>
+          </section>
+
+          <section class="tab-panel" data-tab-panel="paste">
+            <label for="pasteInput" class="sr-only">Paste IA text</label>
+            <textarea id="pasteInput" placeholder="Paste YAML or structured Markdown here"></textarea>
+          </section>
+
+          <div id="loaderError" class="loader-error" role="alert" aria-live="assertive"></div>
+        </div>
+        <footer class="loader-footer">
+          <button type="button" id="loadSampleBtn" class="btn">Load sample</button>
+          <div class="spacer"></div>
+          <button type="submit" id="cancelLoad" class="btn">Cancel</button>
+          <button type="button" id="confirmLoad" class="btn primary">Load</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+  </html>
+
+
