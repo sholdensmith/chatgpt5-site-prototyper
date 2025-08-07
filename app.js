@@ -58,14 +58,17 @@ pages:
     description: Landing that quickly explains value props and orients visitors to key paths.
     sections:
       - heading: Hero
-        description: High-level positioning, top CTA to Contact and to Services.
+        description: High-level positioning
+        ctas:
+          label: Get in touch
+          pageId: contact
       - heading: Proof Points
         description: Logos, stats, testimonial snippets.
-    ctas:
-      - label: Explore Services
-        pageId: services
-      - label: Get in touch
-        pageId: contact
+      - heading: What We Do
+        description: We build solutions for you.
+        ctas:
+          label: Explore Services
+          pageId: services
 
   about:
     title: About
@@ -75,9 +78,9 @@ pages:
         description: Brief statement of purpose.
       - heading: Team Overview
         description: Link off to Leadership.
-    ctas:
-      - label: Meet leadership
-        pageId: leadership
+        ctas:
+          label: Meet leadership
+          pageId: leadership
 
   leadership:
     title: Leadership
@@ -85,9 +88,9 @@ pages:
     sections:
       - heading: Executives
       - heading: Practice Leads
-    ctas:
-      - label: Our history
-        pageId: history
+        ctas:
+          label: Our history
+          pageId: history
 
   history:
     title: History
@@ -99,11 +102,14 @@ pages:
     sections:
       - heading: Consulting
         description: Strategy, research, and roadmapping.
+        ctas:
+          label: Learn about Consulting
+          pageId: consulting
       - heading: Implementation
         description: Design systems, builds, integrations.
-    ctas:
-      - label: Talk to sales
-        pageId: contact
+        ctas:
+          label: Learn about Implementation
+          pageId: implementation
 
   consulting:
     title: Consulting
@@ -144,6 +150,7 @@ footer:
     footerContent: document.getElementById('footerContent'),
     openLoader: document.getElementById('openLoader'),
     floatingLoadBtn: document.getElementById('floatingLoadBtn'),
+    floatingSitemapBtn: document.getElementById('floatingSitemapBtn'),
     loaderDialog: document.getElementById('loaderDialog'),
     fileInput: document.getElementById('fileInput'),
     fileDrop: document.getElementById('fileDrop'),
@@ -353,8 +360,47 @@ footer:
     // Ensure pages have title
     for (const [pid, page] of Object.entries(ia.pages)) {
       if (!page.title) page.title = pid.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      // Normalize page-level CTAs to array
+      if (page.ctas !== undefined) page.ctas = normalizeCTAs(page.ctas);
+      // Normalize section CTAs to array
+      if (Array.isArray(page.sections)) {
+        page.sections = page.sections.map(section => {
+          if (!section || typeof section !== 'object') return section;
+          if (section.ctas !== undefined) section.ctas = normalizeCTAs(section.ctas);
+          return section;
+        });
+      }
     }
     return ia;
+  }
+
+  function normalizeCTAs(rawCtas) {
+    if (rawCtas == null) return [];
+    let list;
+    if (Array.isArray(rawCtas)) list = rawCtas;
+    else list = [rawCtas];
+
+    return list
+      .map(entry => {
+        if (typeof entry === 'string') {
+          const m = /^(.+?)\s*->\s*(.+)$/.exec(entry.trim());
+          if (m) return labelAndTarget(m[1], m[2]);
+          return { label: entry.trim() };
+        }
+        if (entry && typeof entry === 'object') {
+          const out = { label: (entry.label ?? entry.pageId ?? entry.href ?? 'CTA') };
+          if (entry.pageId) out.pageId = slugify(entry.pageId);
+          if (entry.href) out.href = String(entry.href);
+          // support { target: 'contact' } style
+          if (!out.pageId && !out.href && entry.target) {
+            const t = String(entry.target);
+            if (/^https?:\/\//i.test(t) || t.startsWith('/')) out.href = t; else out.pageId = slugify(t);
+          }
+          return out;
+        }
+        return null;
+      })
+      .filter(Boolean);
   }
 
   function renderIA(ia) {
@@ -490,6 +536,20 @@ footer:
 
   function navigateToPage(pageId) {
     if (!state.ia) return;
+    if (pageId === '__sitemap') {
+      state.currentPageId = pageId;
+      highlightCurrentNav('');
+      els.pageOutlet.innerHTML = '';
+      const container = document.createElement('section');
+      container.className = 'page-section';
+      const h1 = document.createElement('h1');
+      h1.textContent = 'Sitemap';
+      container.appendChild(h1);
+      container.appendChild(renderSitemap(state.ia));
+      els.pageOutlet.appendChild(container);
+      setHash(pageId);
+      return;
+    }
     const page = state.ia.pages?.[pageId];
     if (!page) {
       els.pageOutlet.innerHTML = `<section class="page-section"><h1>Page not found</h1><p>No page configured for id: <code>${escapeHtml(pageId)}</code></p></section>`;
@@ -500,6 +560,33 @@ footer:
     els.pageOutlet.innerHTML = '';
     const container = document.createElement('section');
     container.className = 'page-section';
+
+    // Breadcrumbs
+    const crumbs = computeBreadcrumbs(state.ia.mainNav, pageId) || [];
+    if (crumbs.length) {
+      const nav = document.createElement('nav');
+      nav.className = 'breadcrumbs';
+      nav.setAttribute('aria-label', 'Breadcrumb');
+      const ol = document.createElement('ol');
+      crumbs.forEach((node, idx) => {
+        const li = document.createElement('li');
+        const isLast = idx === crumbs.length - 1;
+        if (!isLast && node.pageId) {
+          const a = document.createElement('a');
+          a.href = `#${node.pageId}`;
+          a.textContent = node.label || node.pageId;
+          li.appendChild(a);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = node.label || node.pageId || page.title || pageId;
+          if (isLast) li.setAttribute('aria-current', 'page');
+          li.appendChild(span);
+        }
+        ol.appendChild(li);
+      });
+      nav.appendChild(ol);
+      container.appendChild(nav);
+    }
     const h1 = document.createElement('h1');
     h1.textContent = page.title || pageId;
     const meta = document.createElement('div');
@@ -526,10 +613,25 @@ footer:
           d.textContent = section.description;
           box.appendChild(d);
         }
+        if (Array.isArray(section.ctas) && section.ctas.length) {
+          const list = document.createElement('div');
+          list.className = 'cta-list';
+          for (const cta of section.ctas) {
+            const a = document.createElement('a');
+            a.className = 'cta' + (cta.pageId ? ' internal' : '');
+            if (cta.pageId) a.href = `#${cta.pageId}`;
+            else if (cta.href) { a.href = cta.href; a.target = '_blank'; relSafe(a); }
+            else a.href = '#';
+            a.textContent = cta.label || cta.pageId || cta.href;
+            list.appendChild(a);
+          }
+          box.appendChild(list);
+        }
         container.appendChild(box);
       }
     }
 
+    // Back-compat: render page-level CTAs if present
     if (Array.isArray(page.ctas) && page.ctas.length) {
       const list = document.createElement('div');
       list.className = 'cta-list';
@@ -547,6 +649,98 @@ footer:
 
     els.pageOutlet.appendChild(container);
     setHash(pageId);
+  }
+
+  function renderSitemap(ia) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sitemap';
+
+    const heading = document.createElement('p');
+    heading.className = 'page-meta';
+    heading.textContent = ia.site?.title ? `${ia.site.title} structure` : 'Site structure';
+    wrapper.appendChild(heading);
+
+    const navTree = buildTree(ia.mainNav);
+    wrapper.appendChild(navTree);
+
+    // Orphan pages (not referenced in mainNav)
+    const referenced = new Set();
+    collectNavPageIds(ia.mainNav, referenced);
+    const orphanIds = Object.keys(ia.pages || {}).filter(pid => !referenced.has(pid));
+    if (orphanIds.length) {
+      const orphansTitle = document.createElement('h3');
+      orphansTitle.textContent = 'Other pages';
+      wrapper.appendChild(orphansTitle);
+      const list = document.createElement('ul');
+      for (const pid of orphanIds) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `#${pid}`;
+        a.textContent = ia.pages[pid].title || pid;
+        const id = document.createElement('code');
+        id.className = 'muted-id';
+        id.textContent = ` /${pid}`;
+        li.appendChild(a);
+        li.appendChild(id);
+        list.appendChild(li);
+      }
+      wrapper.appendChild(list);
+    }
+
+    return wrapper;
+  }
+
+  function collectNavPageIds(items, outSet) {
+    if (!Array.isArray(items)) return;
+    for (const it of items) {
+      if (it.pageId) outSet.add(it.pageId);
+      if (Array.isArray(it.children)) collectNavPageIds(it.children, outSet);
+    }
+  }
+
+  function buildTree(items) {
+    const ul = document.createElement('ul');
+    for (const item of items || []) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      if (item.pageId) { a.href = `#${item.pageId}`; a.textContent = item.label || item.pageId; }
+      else { a.href = '#'; a.textContent = item.label || '(no label)'; }
+      li.appendChild(a);
+      if (item.pageId) {
+        const id = document.createElement('code');
+        id.className = 'muted-id';
+        id.textContent = ` /${item.pageId}`;
+        li.appendChild(id);
+      }
+      if (Array.isArray(item.children) && item.children.length) {
+        li.appendChild(buildTree(item.children));
+      }
+      ul.appendChild(li);
+    }
+    return ul;
+  }
+
+  // Return an array of nav nodes from root to the item that matches pageId
+  function computeBreadcrumbs(items, pageId) {
+    if (!Array.isArray(items)) return [];
+    for (const item of items) {
+      const path = findPath(item, pageId);
+      if (path) return path;
+    }
+    // Fallback: single crumb with current page
+    return [{ label: state.ia.pages?.[pageId]?.title || pageId, pageId }];
+  }
+
+  function findPath(node, targetPageId, trail = []) {
+    const current = { label: node.label || node.pageId, pageId: node.pageId };
+    const nextTrail = [...trail, current];
+    if (node.pageId === targetPageId) return nextTrail;
+    const children = Array.isArray(node.children) ? node.children : [];
+    for (const child of children) {
+      const found = findPath(child, targetPageId, nextTrail);
+      if (found) return found;
+    }
+    return null;
   }
 
   function highlightCurrentNav(pageId) {
@@ -634,6 +828,7 @@ footer:
   function init() {
     els.openLoader?.addEventListener('click', openLoaderDialog);
     els.floatingLoadBtn?.addEventListener('click', openLoaderDialog);
+    els.floatingSitemapBtn?.addEventListener('click', () => navigateToPage('__sitemap'));
     els.confirmLoad?.addEventListener('click', handleConfirmLoad);
     els.cancelLoad?.addEventListener('click', closeLoaderDialog);
     els.loadSampleBtn?.addEventListener('click', loadSample);

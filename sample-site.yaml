@@ -36,14 +36,17 @@ pages:
     description: Landing that quickly explains value props and orients visitors to key paths.
     sections:
       - heading: Hero
-        description: High-level positioning, top CTA to Contact and to Services.
+        description: High-level positioning
+        ctas:
+          label: Get in touch
+          pageId: contact
       - heading: Proof Points
         description: Logos, stats, testimonial snippets.
-    ctas:
-      - label: Explore Services
-        pageId: services
-      - label: Get in touch
-        pageId: contact
+      - heading: What We Do
+        description: We build solutions for you.
+        ctas:
+          label: Explore Services
+          pageId: services
 
   about:
     title: About
@@ -53,9 +56,9 @@ pages:
         description: Brief statement of purpose.
       - heading: Team Overview
         description: Link off to Leadership.
-    ctas:
-      - label: Meet leadership
-        pageId: leadership
+        ctas:
+          label: Meet leadership
+          pageId: leadership
 
   leadership:
     title: Leadership
@@ -63,9 +66,9 @@ pages:
     sections:
       - heading: Executives
       - heading: Practice Leads
-    ctas:
-      - label: Our history
-        pageId: history
+        ctas:
+          label: Our history
+          pageId: history
 
   history:
     title: History
@@ -77,11 +80,14 @@ pages:
     sections:
       - heading: Consulting
         description: Strategy, research, and roadmapping.
+        ctas:
+          label: Learn about Consulting
+          pageId: consulting
       - heading: Implementation
         description: Design systems, builds, integrations.
-    ctas:
-      - label: Talk to sales
-        pageId: contact
+        ctas:
+          label: Learn about Implementation
+          pageId: implementation
 
   consulting:
     title: Consulting

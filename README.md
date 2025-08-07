@@ -41,9 +41,9 @@ pages:
     sections:
       - heading: Hero
         description: Optional
-    ctas:
-      - label: Contact us
-        pageId: contact # or href: https://...
+        ctas:
+          - label: Contact us
+            pageId: contact # or href: https://...
 footer:
   links:
     - label: Privacy
